@@ -58,8 +58,8 @@ def get_hint_message(outcome: str) -> str:
     if outcome == "Win":
         return "🎉 Correct!"
     if outcome == "Too High":
-        return "📈 Go HIGHER!"
-    return "📉 Go LOWER!"
+        return "📉 Go LOWER!"
+    return "📈 Go HIGHER!"
 
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
