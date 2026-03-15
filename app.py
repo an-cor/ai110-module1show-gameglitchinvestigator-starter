@@ -1,7 +1,7 @@
 import random
 # FIX: Refactored core logic into logic_utils.py using Claude; verified pytest runs and app still launches.
 import streamlit as st
-from logic_utils import get_range_for_difficulty, parse_guess, check_guess, update_score, get_hint_message
+from logic_utils import DIFFICULTY_CONFIG, get_range_for_difficulty, parse_guess, check_guess, update_score, get_hint_message
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
 
@@ -16,37 +16,34 @@ difficulty = st.sidebar.selectbox(
     index=1,
 )
 
-attempt_limit_map = {
-    "Easy": 6,
-    "Normal": 8,
-    "Hard": 5,
-}
-attempt_limit = attempt_limit_map[difficulty]
-
-low, high = get_range_for_difficulty(difficulty)
+cfg = DIFFICULTY_CONFIG[difficulty]
+low, high, attempt_limit = cfg["min_num"], cfg["max_num"], cfg["max_attempts"]
 
 st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
 
-if "secret" not in st.session_state:
+
+def reset_game_state():
     st.session_state.secret = random.randint(low, high)
-
-if "attempts" not in st.session_state:
-    st.session_state.attempts = 1
-
-if "score" not in st.session_state:
+    st.session_state.attempts = 0
     st.session_state.score = 0
-
-if "status" not in st.session_state:
     st.session_state.status = "playing"
-
-if "history" not in st.session_state:
     st.session_state.history = []
+    st.session_state.difficulty = difficulty
+
+
+# Initialize on first load
+if "secret" not in st.session_state:
+    reset_game_state()
+
+# Reset when difficulty changes
+if st.session_state.get("difficulty") != difficulty:
+    reset_game_state()
 
 st.subheader("Make a guess")
 
 st.info(
-    f"Guess a number between 1 and 100. "
+    f"Guess a number between {low} and {high}. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
 )
 
@@ -71,8 +68,7 @@ with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
 if new_game:
-    st.session_state.attempts = 0
-    st.session_state.secret = random.randint(1, 100)
+    reset_game_state()
     st.success("New game started.")
     st.rerun()
 
@@ -84,14 +80,12 @@ if st.session_state.status != "playing":
     st.stop()
 
 if submit:
-    st.session_state.attempts += 1
-
-    ok, guess_int, err = parse_guess(raw_guess)
+    ok, guess_int, err = parse_guess(raw_guess, low, high)
 
     if not ok:
-        st.session_state.history.append(raw_guess)
         st.error(err)
     else:
+        st.session_state.attempts += 1
         st.session_state.history.append(guess_int)
 
         secret = st.session_state.secret

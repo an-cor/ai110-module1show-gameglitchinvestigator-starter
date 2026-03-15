@@ -1,3 +1,10 @@
+DIFFICULTY_CONFIG = {
+    "Easy":   {"min_num": 1, "max_num": 20,  "max_attempts": 6},
+    "Normal": {"min_num": 1, "max_num": 100, "max_attempts": 8},
+    "Hard":   {"min_num": 1, "max_num": 50,  "max_attempts": 5},
+}
+
+
 def get_range_for_difficulty(difficulty: str):
     """Return (low, high) inclusive range for a given difficulty."""
     if difficulty == "Easy":
@@ -9,25 +16,26 @@ def get_range_for_difficulty(difficulty: str):
     return 1, 100
 
 
-def parse_guess(raw: str):
+def parse_guess(raw: str, low: int = None, high: int = None):
     """
     Parse user input into an int guess.
 
     Returns: (ok: bool, guess_int: int | None, error_message: str | None)
     """
-    if raw is None:
+    if raw is None or raw == "":
         return False, None, "Enter a guess."
 
-    if raw == "":
-        return False, None, "Enter a guess."
+    if "." in raw:
+        return False, None, "Enter a whole number, not a decimal."
 
     try:
-        if "." in raw:
-            value = int(float(raw))
-        else:
-            value = int(raw)
+        value = int(raw)
     except Exception:
         return False, None, "That is not a number."
+
+    if low is not None and high is not None:
+        if value < low or value > high:
+            return False, None, f"Guess must be between {low} and {high}."
 
     return True, value, None
 
