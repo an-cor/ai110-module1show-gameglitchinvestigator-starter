@@ -1,7 +1,7 @@
 import random
 # FIX: Refactored core logic into logic_utils.py using Claude; verified pytest runs and app still launches.
 import streamlit as st
-from logic_utils import DIFFICULTY_CONFIG, get_range_for_difficulty, parse_guess, check_guess, update_score, get_hint_message
+from logic_utils import DIFFICULTY_CONFIG, get_range_for_difficulty, parse_guess, check_guess, update_score, get_hint_message, get_hot_cold_label
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
 
@@ -16,6 +16,7 @@ difficulty = st.sidebar.selectbox(
     index=1,
 )
 
+# FIX: Difficulty now drives range and attempt limit via DIFFICULTY_CONFIG
 cfg = DIFFICULTY_CONFIG[difficulty]
 low, high, attempt_limit = cfg["min_num"], cfg["max_num"], cfg["max_attempts"]
 
@@ -23,6 +24,7 @@ st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
 
 
+# FIX: New Game resets all round state (secret, attempts, score, status, history) via helper
 def reset_game_state():
     st.session_state.secret = random.randint(low, high)
     st.session_state.attempts = 0
@@ -79,6 +81,7 @@ if st.session_state.status != "playing":
         st.error("Game over. Start a new game to try again.")
     st.stop()
 
+# FIX: Attempts only increment on valid, in-range guesses; invalid input is never added to history
 if submit:
     ok, guess_int, err = parse_guess(raw_guess, low, high)
 
@@ -86,14 +89,27 @@ if submit:
         st.error(err)
     else:
         st.session_state.attempts += 1
-        st.session_state.history.append(guess_int)
 
         secret = st.session_state.secret
         outcome = check_guess(guess_int, secret)
         message = get_hint_message(outcome)
 
+        # FIX: Hot/cold proximity label added alongside directional hint
+        proximity = get_hot_cold_label(guess_int, secret, low, high)
+
+        # FIX: History now stores dicts so the session summary table can show result and proximity
+        st.session_state.history.append(
+            {"Guess": guess_int, "Result": outcome, "Proximity": proximity}
+        )
+
+        # FIX: Color-coded feedback — success for win, error for too high, info for too low
         if show_hint:
-            st.warning(message)
+            if outcome == "Win":
+                st.success(message)
+            elif outcome == "Too High":
+                st.error(f"{message}  {proximity}")
+            else:
+                st.info(f"{message}  {proximity}")
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -116,6 +132,11 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+
+# FIX: Session summary table shows all guesses, results, and proximity for the current game
+if st.session_state.history:
+    st.subheader("📋 Guess History")
+    st.table(st.session_state.history)
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")

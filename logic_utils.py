@@ -1,7 +1,7 @@
 DIFFICULTY_CONFIG = {
     "Easy":   {"min_num": 1, "max_num": 20,  "max_attempts": 6},
     "Normal": {"min_num": 1, "max_num": 100, "max_attempts": 8},
-    "Hard":   {"min_num": 1, "max_num": 50,  "max_attempts": 5},
+    "Hard":   {"min_num": 1, "max_num": 120, "max_attempts": 5},
 }
 
 
@@ -12,10 +12,11 @@ def get_range_for_difficulty(difficulty: str):
     if difficulty == "Normal":
         return 1, 100
     if difficulty == "Hard":
-        return 1, 50
+        return 1, 120
     return 1, 100
 
 
+# FIX: parse_guess rejects decimals and validates guess is within the difficulty range
 def parse_guess(raw: str, low: int = None, high: int = None):
     """
     Parse user input into an int guess.
@@ -61,6 +62,19 @@ def check_guess(guess, secret):
         return "Too Low"
 
 
+# FIX: Hot/cold proximity label based on how close the guess is as a fraction of the range
+def get_hot_cold_label(guess: int, secret: int, low: int, high: int) -> str:
+    """Return a proximity label: Very Close, Close, or Far based on distance ratio."""
+    range_size = high - low or 1
+    ratio = abs(guess - secret) / range_size
+    if ratio <= 0.10:
+        return "🔥 Very Close!"
+    if ratio <= 0.25:
+        return "🌡️ Close"
+    return "🧊 Far"
+
+
+# FIX: Secret stays an int always; hint messages corrected (Too High -> go lower, Too Low -> go higher)
 def get_hint_message(outcome: str) -> str:
     """Return the emoji hint message for a given outcome."""
     if outcome == "Win":
