@@ -25,14 +25,39 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 📝 Document Your Experience
 
-- [ ] Describe the game's purpose.
-- [ ] Detail which bugs you found.
-- [ ] Explain what fixes you applied.
+- [x] Describe the game's purpose.
+
+The game's purpose is to find glitches happening from AI generated code including UI and logic. While playing the game, there are a few things that are buggy and the whole point is to find these to then try and fix them. The actual game is played by having a random number generated and guessing this number. There are easy, medium and hard levels that affect the range the number is to be guessed and the amount of guesses a player has.
+
+- [x] Detail which bugs you found.
+
+I found that the difficulty button under settings, the easy setting would have an unresponsive UI that wouldn't reflect the range. The hard difficulty has bad logic in which the range of 1-50 was actually easier than normal difficulty of 1-100.
+
+The new game button did not fully reset the game state since the page does not reload cleanly with fresh variables (secret number, attempts, score, history, etc.). A new game would load the previous game's data.
+
+The input (the guess) was also buggy where a game would accept numbers outside the expected range like -1 or 1,000,000. These values should be rejected based on the current difficulty range and should be within the bounds of the range. Strings (like words) would also be allowed as guesses when only digits should be accepted.
+
+- [x] Explain what fixes you applied.
+
+I made sure to have a UI that was responsive to what is being selected in the settings when it came to the difficulty levels. The developer debug info, the settings, and what is being showed to the player all had to match and make sense while playing the game. I also had the amount of attempts and ranges per difficulty changed to match something that scaled relative to the difficulty. 
+
+I made sure to change the logic for the "new game" button to reset the variables of the previous game (completed or not) to restart fresh based on the settings. 
+
+I added validation to the input (the guess) to make sure that it was a digit, not a string, and within bounds of the range for the guess. 
+
 
 ## 📸 Demo
 
-- [ ] [Insert a screenshot of your fixed, winning game here]
+- [x] [Insert a screenshot of your fixed, winning game here]
+
+![game-ui.png](game UI)
 
 ## 🚀 Stretch Features
 
-- [ ] [If you choose to complete Challenge 4, insert a screenshot of your Enhanced Game UI here]
+- [x] [Challenge 1: Advanced Edge-Case Testing]
+
+![pytest-screenshot.png](pytest picture)
+
+- [x] [If you choose to complete Challenge 4, insert a screenshot of your Enhanced Game UI here]
+
+![enhanced-game-ui.png](history UI)
